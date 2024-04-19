@@ -1,0 +1,56 @@
+Define a Custom Layout:
+
+Create a custom layout class that extends PatternLayout.
+Override the format() method to format the log message with additional information.
+Include placeholders in your pattern for the servlet name (if applicable) and thread hash code.
+
+Java
+public class LogWithOriginLayout extends PatternLayout {
+
+    private static final String FQCN_PATTERN = "%logger{36}";
+    private static final String THREAD_PATTERN = "%thread";
+
+    public LogWithOriginLayout(String pattern) {
+        super(pattern + " [" + FQCN_PATTERN + "] (thread: " + THREAD_PATTERN + ")");
+    }
+}This layout includes the fully qualified class name (FQCN_PATTERN) and thread hash code (THREAD_PATTERN) in the log message.
+
+2. Modify Log4j2 Configuration:
+
+Update your Log4j2 configuration file (e.g., log4j2.xml) to use the custom layout.
+Define an appender that writes to a JSON file using a JSON layout converter. Popular options include Jackson or Gson.
+Here's an example configuration:
+
+XML
+<configuration name="MyLogger">
+  <appenders>
+    <File name="myAppLog" fileName="app.log" immediateFlush="true">
+      <layout class="com.yourpackage.LogWithOriginLayout">
+        <pattern>%d{ISO8601_BASIC} %-5level %msg%n</pattern>
+      </layout>
+      <JsonLayout compact="true" eventObjectMapper="jackson">
+        <KeyValuePair key="servletName" value="${sys:servlet.name}"/> </JsonLayout>
+    </File>
+  </appenders>
+
+  <loggers>
+    <root level="info">
+      <appenderRef ref="myAppLog" />
+    </root>
+  </loggers>
+</configuration>
+
+This configuration defines a File appender that writes to app.log with the custom layout. Additionally, it defines a JsonLayout that converts the logs to JSON format and captures the system property sys:servlet.name (if available) as a key-value pair named servletName.
+
+3. Capture Servlet Origin (Optional):
+
+If you need to capture the specific servlet that initiated the call, consider setting a custom system property or thread local variable within the servlet before making the service call.
+Access this property within your custom layout to include it in the JSON output.
+4. Template and Processing (Optional):
+
+While Log4j2 doesn't directly handle templates, you can consider post-processing the generated JSON file with external tools based on your template needs.
+Remember:
+
+Adjust the package names, class names, and property names according to your project structure.
+You might need additional dependencies for JSON serialization (e.g., Jackson or Gson).
+This approach allows you to leverage Log4j2's existing logging infrastructure while generating JSON files with call origin information
